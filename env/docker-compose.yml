@@ -1,0 +1,54 @@
+version: '3.7'
+
+services:
+  # Database
+  db:
+    # build: 
+    #   dockerfile: ./mysql-dockerfile
+    #   context: .
+    image: mysql:5.7
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: lv1502fabr
+      MYSQL_DATABASE: wppadrao
+      MYSQL_USER: wppadrao
+      MYSQL_PASSWORD: lv1502fabr
+    networks:
+      - wpsite
+  # phpmyadmin
+  phpmyadmin:
+    depends_on:
+      - db
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    ports:
+      - '8080:80'
+    environment:
+      UPLOAD_LIMIT: '256M'
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: lv1502fabr 
+    networks:
+      - wpsite
+  # Wordpress
+  wordpress:
+    depends_on:
+      - db
+    image: wordpress:latest
+    ports:
+      - '8000:80'
+    restart: always
+    volumes: ['./wordpress/:/var/www/html']
+    environment:
+      WORDPRESS_TABLE_PREFIX: _fc
+      WORDPRESS_DB_NAME: wppadrao
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: root
+      WORDPRESS_DB_PASSWORD: lv1502fabr
+    networks:
+      - wpsite
+networks:
+  wpsite: 
+volumes:
+  db_data:

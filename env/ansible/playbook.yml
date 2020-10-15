@@ -2,3 +2,4 @@
 - hosts: master
   roles: 
     - docker 
+    - docker-compose 
