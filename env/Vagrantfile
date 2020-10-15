@@ -1,0 +1,38 @@
+# Master vars
+$install_ansible = <<-SCRIPT
+  sudo dnf install -y epel-release && sudo dnf install -y ansible && \
+  mkdir /home/vagrant/keys
+SCRIPT
+
+$change_sshd_config = <<-SCRIPT
+  sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
+  sudo sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config
+SCRIPT
+
+Vagrant.configure("2") do |config|
+    config.vm.provider "virtualbox" do |v|
+      v.memory = 1024
+    end
+
+    # Box de Ansible (master)
+    config.vm.define 'master' do |master|
+        master.vm.box = "generic/centos8"
+        master.vm.synced_folder ".", "/home/vagrant/host"
+        master.vm.synced_folder "./ansible", "/vagrant/ansible"
+        master.vm.network "private_network", ip: "172.17.167.10"
+        master.vm.hostname = 'master'
+
+        master.vm.provision "ansible_local" do |ansible|
+            ansible.playbook = "ansible/playbook.yml"
+            ansible.extra_vars = {
+                master_ip: "172.17.167.10",
+            }
+        end
+  
+        master.vm.provision "shell", inline: "echo alias clear_hosts='> /home/vagrant/.ssh/known_hosts' >> /home/vagrant/.bashrc"
+        master.vm.provision "shell", inline: $install_ansible, privileged: false 
+        master.vm.provision "shell", inline: $change_sshd_config, privileged: false
+    end
+end
+    
+    
